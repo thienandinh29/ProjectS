@@ -3,8 +3,8 @@ import queue
 import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from .engine import prepare, Settings, Playback, Cancelled, Plan, Stroke, correction_keys, render_unicode
-from .telex import TextError, normalize, Encoder
+from .engine import prepare, Settings, Playback, Cancelled, Plan, Stroke, correction_keys, render_unicode, break_seconds
+from .telex import TextError, normalize, Encoder, SUPPORTED
 from .importers import read_file, read_google_doc, checked_text
 from .keyboard import WindowsKeyboard
 from . import __version__
@@ -34,6 +34,7 @@ CHẾ ĐỘ TELEX (mô phỏng phím gõ qua UniKey)
 CHẾ ĐỘ UNICODE TRỰC TIẾP (nếu Telex không hoạt động)
 Gửi từng ký tự Unicode, không dùng clipboard và không cần UniKey chuyển dấu.
 Giữ nguyên tiếng Việt, dấu ngoặc cong và nhiều ký tự khác.
+Tự chuyển sang Unicode nếu nội dung có ký tự Telex không gõ được (ví dụ: η).
 
 THỬ TRƯỚC KHI GÕ DÀI (không bắt buộc)
 6. Nhấn 'Gõ mẫu thử', rồi bấm vào một ô nhập chữ trống khi đang đếm ngược.
@@ -207,7 +208,7 @@ class App:
         if not self.busy:
             size = len(self.text.get("1.0", "end-1c"))
             self.meta.set(f"{size:,} / 100.000 ký tự")
-            self.eta.set("Ước tính: " + duration(size * 0.23 / self.speed.get()) + " · tính chính xác khi bắt đầu" if size else "Thời gian: —")
+            self.eta.set("Ước tính: " + duration(size * 0.23 / self.speed.get() + break_seconds(size)) + " · tính chính xác khi bắt đầu" if size else "Thời gian: —")
             self.start_button.state(["!disabled"] if self.text.get("1.0", "end-1c").strip() else ["disabled"])
 
     def text_changed(self, *_):
@@ -302,6 +303,7 @@ class App:
         if not test:
             self.text.delete("1.0", "end")
             self.text.insert("1.0", text)
+        self.select_input_mode(text)
         self.test_run = test
         self.has_started = True
         self.start_button.config(text="Bắt đầu từ đầu")
@@ -349,6 +351,14 @@ class App:
                 self.messages.put(("finished", "error"))
         self.last_outcome = None
         threading.Thread(target=worker, daemon=True).start()
+
+    def select_input_mode(self, text):
+        # Switch the entire run, including the keyboard backend, before planning.
+        # Never remove or transliterate characters that Telex cannot represent.
+        if self.settings().mode == "telex" and any(ch not in SUPPORTED and ch.isprintable() for ch in text):
+            self.mode.set("Unicode trực tiếp")
+            self.invalidate_test()
+            self.profile.set("Đã tự chuyển sang Unicode trực tiếp để giữ nguyên ký tự ngoài Telex.")
 
     def verify_dialog(self):
         if not self.completed_test or self.busy:
@@ -412,11 +422,15 @@ class App:
                 elif event == "ready":
                     self.eta.set(f"Dự kiến: {duration(data.estimated_seconds)} · {data.corrections} lần sửa")
                 elif event == "countdown":
-                    self.status.set(f"{data}… Bấm vào ô cần gõ ở Word, Notepad, trình duyệt hoặc ứng dụng khác.")
+                    self.status.set(f"{data}… {self.mode.get()} · Bấm vào ô cần gõ trong ứng dụng đích.")
                 elif event == "progress":
                     count, total, remaining = data
                     self.progress["value"] = 100 * count / total
                     self.status.set(f"Đang gõ · {count:,} / {total:,} ký tự · F8 để dừng")
+                    self.eta.set("Còn khoảng " + duration(remaining))
+                elif event == "rest":
+                    count, total, seconds, remaining = data
+                    self.status.set(f"Đang nghỉ · {seconds} giây nữa gõ tiếp · {count:,} / {total:,} ký tự · F8 để dừng")
                     self.eta.set("Còn khoảng " + duration(remaining))
                 elif event in ("complete", "stopped", "error"):
                     self.status.set(data)

@@ -40,6 +40,9 @@ làm vậy sẽ không kiểm tra được khả năng gõ trên máy của bạ
   Với tài liệu riêng tư, tự tải `.docx`/`.txt` rồi mở tệp đó. Không cần công khai tài liệu.
 - Kiểm tra phần xem trước: chỉ có chữ và xuống dòng, không giữ ảnh/định dạng.
 - Tốc độ mặc định 1× có nhịp 100–220 ms/phím, thêm khoảng nghỉ ở dấu câu.
+- Cứ 500 ký tự nội dung (kể cả khoảng trắng và xuống dòng), ứng dụng nghỉ
+  10 giây rồi tự gõ tiếp. Thời gian nghỉ không đổi theo tốc độ; không nghỉ thêm
+  khi đã gõ hết. Màn hình hiện đếm ngược khi nghỉ, F8 vẫn dừng ngay.
 - Có thể bật **Thỉnh thoảng gõ sai rồi sửa**; mặc định khi bật là 2% số từ đủ điều kiện.
 - Nhấn **Bắt đầu**, rồi bấm vị trí trống trong Docs trong 5 giây. Không chọn sẵn
   văn bản và không đặt con trỏ giữa một từ đang có.

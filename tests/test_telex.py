@@ -88,6 +88,12 @@ class TelexTests(unittest.TestCase):
         self.assertGreater(plan.corrections, 0)
         self.assertEqual(render_unicode("".join(s.key for s in plan.strokes)), text)
 
+    def test_unicode_preserves_greek_eta_in_vietnamese(self):
+        text = "Hiệu suất η = 0.85. Tiếng Việt, ‘ký hiệu’ — 🙂."
+        plan = prepare(text, Settings(mode="unicode"))
+        self.assertEqual(plan.text, text)
+        self.assertEqual(render_unicode("".join(s.key for s in plan.strokes)), text)
+
     def test_unicode_rejects_control_characters(self):
         with self.assertRaises(TextError):
             prepare("abc\x08d", Settings(mode="unicode"))

@@ -25,6 +25,18 @@ assert app.start_button.instate(["!disabled"])
 app.mode.set("Unicode trực tiếp")
 assert app.settings().mode == "unicode"
 assert app.countdown.get() == "5"
+app.mode.set("Telex qua UniKey")
+app.select_input_mode("Tiếng Việt")
+assert app.settings().mode == "telex"
+app.completed_test = ("old sample", ("notepad.exe", 0, False))
+app.verified_profile = app.completed_test[1]
+app.select_input_mode("Hiệu suất η = 0.85")
+assert app.settings().mode == "unicode"
+assert app.completed_test is None and app.verified_profile is None
+assert "Unicode" in app.profile.get()
+app.mode.set("Telex qua UniKey")
+app.select_input_mode("abc\x08d")
+assert app.settings().mode == "telex"
 app.text.delete("1.0", "end")
 root.update()
 assert app.start_button.instate(["disabled"])

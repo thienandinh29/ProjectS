@@ -7,9 +7,14 @@ telemetry, content logs, or fabricated history.
 
 ## Run
 
-Open `dist/GoViet.exe`, then follow [the Vietnamese guide](HUONG_DAN.md).
+Open `dist/GoViet-1.1.1.exe`, then follow [the Vietnamese guide](HUONG_DAN.md).
 No Python installation is needed for the executable. Windows 10/11 x64,
 UniKey Unicode + Telex, and Chrome or Edge are required.
+
+Version 1.1.1 automatically selects direct Unicode input before typing when the
+source contains printable characters outside Telex's supported set (for example,
+Greek `η`, curly quotes or emoji). The selected mode is shown in the interface
+and countdown. Source characters are preserved; control characters remain rejected.
 
 Use a blank scratch Google Doc for the first compatibility test. Copy its output
 back to the app to unlock typing. This is required every app session and after

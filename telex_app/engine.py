@@ -7,6 +7,12 @@ from .telex import Encoder, TextError, Issue, normalize
 from .telex import WORD, VIETNAMESE
 from .importers import MAX_CHARS
 
+BREAK_INTERVAL = 500
+BREAK_SECONDS = 10
+
+def break_seconds(size):
+    return max(0, (size - 1) // BREAK_INTERVAL) * BREAK_SECONDS
+
 @dataclass(frozen=True)
 class Settings:
     speed: float = 1.0
@@ -45,6 +51,7 @@ class Stroke:
     key: str
     delay: float
     progress: int
+    rest: float = 0.0
 
 @dataclass(frozen=True)
 class Plan:
@@ -80,6 +87,7 @@ def prepare(text, settings=Settings(), rng=None, cancel=None):
     encoder, rng = Encoder(settings.modern) if settings.mode == "telex" else None, rng or random.Random()
     tokens = encoder.tokenize(text) if encoder else unicode_tokens(text)
     strokes, progress, corrections = [], 0, 0
+    next_break = BREAK_INTERVAL
     for token, keys, is_word in tokens:
         if cancel and cancel.is_set():
             raise Cancelled()
@@ -95,6 +103,10 @@ def prepare(text, settings=Settings(), rng=None, cancel=None):
             if candidate:
                 script = candidate
                 corrections += 1
+        # Count source characters only in the final, correct spelling. Telex
+        # modifiers and the temporary typo/backspaces do not advance the count.
+        correct_start = len(script) - len(keys)
+        crosses_break = progress < next_break <= progress + len(token) and next_break < len(text)
         for index, key in enumerate(script):
             delay = rng.uniform(0.100, 0.220)
             if key in ".!?":
@@ -106,12 +118,22 @@ def prepare(text, settings=Settings(), rng=None, cancel=None):
             if index + 1 < len(script) and script[index + 1] == "\b" and key != "\b":
                 delay += rng.uniform(0.4, 0.8)
             completed = progress + len(token) if index == len(script) - 1 else progress
-            strokes.append(Stroke(key, delay / settings.speed, completed))
+            if index >= correct_start:
+                correct_index = index - correct_start
+                if not encoder or not is_word:
+                    completed = progress + correct_index + 1
+                elif crosses_break:
+                    completed = progress + min(len(token), len(encoder.oracle.render(keys[:correct_index + 1])))
+            rest = 0.0
+            if next_break <= completed and next_break < len(text):
+                rest = BREAK_SECONDS
+                next_break += BREAK_INTERVAL
+            strokes.append(Stroke(key, delay / settings.speed, completed, rest))
         progress += len(token)
     output = "".join(s.key for s in strokes)
     if (encoder.oracle.render(output) if encoder else render_unicode(output)) != text:
         raise TextError([Issue(0, len(text), "Kế hoạch sửa lỗi không cho kết quả chính xác; hãy tắt sửa lỗi rồi thử lại.")])
-    return Plan(text, tuple(strokes), sum(s.delay for s in strokes), corrections)
+    return Plan(text, tuple(strokes), sum(s.delay + s.rest for s in strokes), corrections)
 
 class Cancelled(Exception):
     pass
@@ -165,6 +187,11 @@ class Playback:
                 self.notify("progress", (stroke.progress, len(plan.text), remaining))
                 self.wait(stroke.delay)
                 remaining = max(0, remaining - stroke.delay)
+                if stroke.rest:
+                    for seconds in range(int(stroke.rest), 0, -1):
+                        self.notify("rest", (stroke.progress, len(plan.text), seconds, remaining))
+                        self.wait(1)
+                        remaining = max(0, remaining - 1)
             outcome = "complete"
             self.notify("complete", "Đã gõ xong. Hãy kiểm tra nội dung trong ứng dụng đích.")
         except Cancelled:
