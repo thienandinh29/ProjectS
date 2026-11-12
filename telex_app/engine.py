@@ -7,11 +7,15 @@ from .telex import Encoder, TextError, Issue, normalize
 from .telex import WORD, VIETNAMESE
 from .importers import MAX_CHARS
 
-BREAK_INTERVAL = 500
-BREAK_SECONDS = 10
+# Breaks happen only after a finished sentence. How many sentences are typed
+# before each break, and how long it lasts, are drawn at random every time.
+BREAK_SENTENCES = (4, 9)
+BREAK_SECONDS = (8, 25)
+_AVERAGE_BREAK_EVERY = 600  # source characters; used only for the rough estimate
 
 def break_seconds(size):
-    return max(0, (size - 1) // BREAK_INTERVAL) * BREAK_SECONDS
+    """Rough expected total rest for the on-screen estimate (exact value comes from the plan)."""
+    return (size // _AVERAGE_BREAK_EVERY) * sum(BREAK_SECONDS) / 2
 
 @dataclass(frozen=True)
 class Settings:
@@ -87,7 +91,7 @@ def prepare(text, settings=Settings(), rng=None, cancel=None):
     encoder, rng = Encoder(settings.modern) if settings.mode == "telex" else None, rng or random.Random()
     tokens = encoder.tokenize(text) if encoder else unicode_tokens(text)
     strokes, progress, corrections = [], 0, 0
-    next_break = BREAK_INTERVAL
+    sentences_left = rng.randint(*BREAK_SENTENCES)
     for token, keys, is_word in tokens:
         if cancel and cancel.is_set():
             raise Cancelled()
@@ -106,7 +110,6 @@ def prepare(text, settings=Settings(), rng=None, cancel=None):
         # Count source characters only in the final, correct spelling. Telex
         # modifiers and the temporary typo/backspaces do not advance the count.
         correct_start = len(script) - len(keys)
-        crosses_break = progress < next_break <= progress + len(token) and next_break < len(text)
         for index, key in enumerate(script):
             delay = rng.uniform(0.100, 0.220)
             if key in ".!?":
@@ -122,12 +125,16 @@ def prepare(text, settings=Settings(), rng=None, cancel=None):
                 correct_index = index - correct_start
                 if not encoder or not is_word:
                     completed = progress + correct_index + 1
-                elif crosses_break:
-                    completed = progress + min(len(token), len(encoder.oracle.render(keys[:correct_index + 1])))
             rest = 0.0
-            if next_break <= completed and next_break < len(text):
-                rest = BREAK_SECONDS
-                next_break += BREAK_INTERVAL
+            if not is_word and key in ".!?\n":
+                after = progress + index + 1
+                # A sentence ends at ./!/? followed by whitespace ("3.14" does not
+                # count) or at a line break; never rest after the final sentence.
+                if after < len(text) and ((key == "\n" and (after < 2 or text[after - 2] not in ".!?")) or (key != "\n" and text[after].isspace())) and text[after:].strip():
+                    sentences_left -= 1
+                    if sentences_left <= 0:
+                        rest = rng.randint(*BREAK_SECONDS)
+                        sentences_left = rng.randint(*BREAK_SENTENCES)
             strokes.append(Stroke(key, delay / settings.speed, completed, rest))
         progress += len(token)
     output = "".join(s.key for s in strokes)
