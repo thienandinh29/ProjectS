@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import random
 import time
 import threading
+import unicodedata
 from .telex import Encoder, TextError, Issue, normalize
 from .telex import WORD, VIETNAMESE
 from .importers import MAX_CHARS
@@ -16,7 +17,7 @@ class Settings:
 
 def unicode_tokens(text):
     issues = [Issue(i, i+1, f"Ký tự điều khiển chưa hỗ trợ: U+{ord(c):04X}.")
-              for i, c in enumerate(text) if c != "\n" and (not c.isprintable() or 0xD800 <= ord(c) <= 0xDFFF)]
+              for i, c in enumerate(text) if c != "\n" and (unicodedata.category(c) in ("Cc", "Cs"))]
     if issues:
         raise TextError(issues)
     tokens, cursor = [], 0

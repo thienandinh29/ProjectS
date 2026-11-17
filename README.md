@@ -47,13 +47,13 @@ sandbox may prevent Tcl/Tk from loading its scripts.
   separately compiled upstream UniKey engine, then reject unsupported input.
 - `engine`: verified word corrections, randomized timing, cancellable playback.
 - `keyboard`: complete key-down/up batches via SendInput; temporary low-level
-  hooks stop on physical input. Browser title, focused child window, process,
+  hooks stop on physical keyboard input or mouse clicks; mouse movement and scrolling are allowed. Browser title, focused child window, process,
   and keyboard layout are checked before every stroke and during waits.
 - `ui`: Tkinter interface; workers only report state through a queue.
 
-Supported input: Vietnamese letters, ASCII letters/numbers/punctuation,
-paragraphs. Tabs become four spaces. Curly quotes, emoji and other unsupported
-characters are highlighted rather than silently changed. Files are limited to
+Unicode direct mode is the default and supports Vietnamese, curly quotes, emoji,
+and other Unicode text. Telex mode supports Vietnamese and ASCII; unsupported
+characters are highlighted. Tabs become four spaces, and control characters are rejected. Files are limited to
 10 MB and source text to 100,000 characters; `.doc` is not supported. DOCX tables
 become rows of plain text; images, headers/footers and formatting are omitted.
 

@@ -82,6 +82,11 @@ class TelexTests(unittest.TestCase):
         plan = prepare(text, Settings(mode="unicode"))
         self.assertEqual("".join(s.key for s in plan.strokes), text)
 
+    def test_unicode_accepts_nonbreaking_spaces_and_emoji_sequences(self):
+        text = "Xin\u00a0chào 👩\u200d💻"
+        plan = prepare(text, Settings(mode="unicode"))
+        self.assertEqual("".join(s.key for s in plan.strokes), text)
+
     def test_unicode_corrections_preserve_text(self):
         text = "Tiếng Việt rất đẹp. " * 20
         plan = prepare(text, Settings(mode="unicode", correction_rate=0.1), random.Random(1))

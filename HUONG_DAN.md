@@ -22,7 +22,7 @@ Google Docs trên Chrome/Edge và UniKey. Giữ máy hoạt động trong lúc g
 1. Mở một **Google Doc trống để thử**, không dùng bài đang làm.
 2. Trong ứng dụng chọn **Thiết lập & gõ mẫu thử**, rồi **Gõ mẫu thử**.
 3. Trong 5 giây đếm ngược, bấm vào vùng soạn thảo của Google Docs.
-4. Thả các phím, không bấm hay cuộn chuột trong lúc ứng dụng gõ.
+4. Thả các phím; có thể di chuyển và cuộn chuột, nhưng không bấm chuột trong lúc gõ.
 5. Khi gõ xong, sao chép toàn bộ mẫu từ Docs. Quay về ứng dụng, chọn
    **Đối chiếu mẫu đã gõ**, dán vào ô đối chiếu rồi kiểm tra.
 6. Chỉ khi nội dung khớp, nút bắt đầu mới được mở. Mẫu có cả tiếng Việt,
@@ -47,7 +47,7 @@ làm vậy sẽ không kiểm tra được khả năng gõ trên máy của bạ
 ## Dừng
 
 Nhấn **F8** ở bất kỳ cửa sổ nào trong lúc đếm ngược/gõ, hoặc bấm **Dừng**.
-Dùng bàn phím, bấm/cuộn chuột hoặc đổi cửa sổ cũng dừng gõ.
+Bạn có thể di chuyển và cuộn chuột. Dùng bàn phím, bấm chuột hoặc đổi cửa sổ sẽ dừng gõ; ứng dụng đích cần giữ tiêu điểm.
 
 Nội dung đã gõ được giữ nguyên. Từ đang gõ hoặc đang sửa có thể còn dang dở;
 hãy kiểm tra và tự sửa trước lần tiếp theo. **Bắt đầu từ đầu** luôn gõ lại toàn
@@ -59,9 +59,9 @@ Trong khi đang nhập tệp/link hoặc kiểm tra nguồn, dùng nút **Dừng
 
 ## Khi gặp vấn đề
 
-- **Ký tự tô đỏ:** phiên bản này hỗ trợ chữ Việt, ASCII và xuống dòng.
-  Đổi dấu ngoặc kép cong thành `"`, dấu nháy cong thành `'`, gạch dài thành `-`,
-  bỏ emoji hoặc thay ký tự được báo. Ứng dụng không tự sửa nội dung nguồn.
+- **Ký tự tô đỏ:** chọn **Unicode trực tiếp** để hỗ trợ dấu ngoặc cong, emoji
+  và nhiều ký tự khác. Các ký tự điều khiển vẫn không được hỗ trợ. Nếu ứng dụng
+  đích không nhận Unicode trực tiếp, thử Telex và thay ký tự được báo.
 - **Báo kiểu dấu:** chọn chế độ hòa/hoà khớp UniKey và cách viết trong nguồn.
 - **Gõ sai dấu hoặc tiếng Anh bị đổi:** kiểm tra cấu hình UniKey và tự động
   sửa của Docs, rồi chạy lại mẫu. Nếu cần, giảm tốc độ.

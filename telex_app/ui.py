@@ -31,7 +31,7 @@ CHẾ ĐỘ TELEX (mô phỏng phím gõ qua UniKey)
 4. Bàn phím Windows: English (US). Tắt Caps Lock.
 5. Nếu ứng dụng tự sửa từ/dấu, hãy tắt tính năng đó trước khi gõ.
 
-CHẾ ĐỘ UNICODE TRỰC TIẾP (nếu Telex không hoạt động)
+CHẾ ĐỘ UNICODE TRỰC TIẾP (mặc định)
 Gửi từng ký tự Unicode, không dùng clipboard và không cần UniKey chuyển dấu.
 Giữ nguyên tiếng Việt, dấu ngoặc cong và nhiều ký tự khác.
 
@@ -41,7 +41,7 @@ THỬ TRƯỚC KHI GÕ DÀI (không bắt buộc)
 7. Nếu muốn đối chiếu, sao chép mẫu vừa gõ từ ứng dụng đích vào ô đối chiếu.
 
 F8 dừng ngay cả khi cửa sổ ứng dụng đang ở phía sau.
-Bấm chuột, cuộn chuột, dùng bàn phím hoặc đổi cửa sổ sẽ dừng gõ.
+Có thể di chuyển và cuộn chuột. Bấm chuột, dùng bàn phím hoặc đổi cửa sổ sẽ dừng gõ.
 Chỉ gõ vào ô văn bản. Phím Enter có thể gửi tin nhắn trong một số ứng dụng.
 Ứng dụng đích cần có cùng quyền chạy với Gõ Việt; không hỗ trợ màn hình bảo mật.
 Ứng dụng không thay đổi cài đặt UniKey và không tạo lịch sử giả.
@@ -73,7 +73,7 @@ class App:
         self.corrections = tk.BooleanVar(value=False)
         self.rate = tk.DoubleVar(value=2.0)
         self.modern = tk.BooleanVar(value=False)
-        self.mode = tk.StringVar(value="Telex qua UniKey")
+        self.mode = tk.StringVar(value="Unicode trực tiếp")
         self.countdown = tk.StringVar(value="5")
         self.source_name = tk.StringVar(value="Nội dung của bạn · Chưa nhập tệp")
         self.status = tk.StringVar(value="Nhập nội dung → Bắt đầu → bấm ô cần gõ trong ứng dụng đích.")
@@ -163,7 +163,7 @@ class App:
         ttk.Label(delay_row, text="Đếm ngược (giây)", style="Card.TLabel").pack(side="left")
         self.countdown_combo = ttk.Combobox(delay_row, textvariable=self.countdown, values=("5", "10", "15"), state="readonly", width=4)
         self.countdown_combo.pack(side="right")
-        ttk.Label(side, text="Bấm ô cần gõ trong lúc đếm ngược. Nếu Telex lỗi, thử Unicode trực tiếp.", style="Muted.TLabel", wraplength=240).pack(anchor="w", pady=(10, 0))
+        ttk.Label(side, text="Bấm ô cần gõ trong lúc đếm ngược. Nếu Unicode không hoạt động, thử Telex.", style="Muted.TLabel", wraplength=240).pack(anchor="w", pady=(10, 0))
         ttk.Label(support, text="Thử trước khi gõ dài", style="Card.TLabel", font=("Segoe UI Semibold", 12)).pack(anchor="w", pady=(0, 12))
         self.modern_check = ttk.Checkbutton(support, text="Kiểu dấu mới: hoà, thuỷ", variable=self.modern, command=self.invalidate_test)
         self.modern_check.pack(anchor="w")

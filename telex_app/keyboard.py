@@ -216,10 +216,10 @@ class WindowsKeyboard:
             return self.user.CallNextHookEx(None, code, wparam, lparam)
 
         def mouse_hook(code, wparam, lparam):
-            if code >= 0 and self.armed and wparam in (0x201, 0x204, 0x207, 0x20B, 0x20A, 0x20E):
+            if code >= 0 and self.armed and wparam in (0x201, 0x204, 0x207, 0x20B):
                 event = C.cast(lparam, C.POINTER(MOUSEHOOK)).contents
                 if not event.flags & 1:
-                    signal("Đã dừng vì bạn vừa bấm hoặc cuộn chuột.")
+                    signal("Đã dừng vì bạn vừa bấm chuột.")
             return self.user.CallNextHookEx(None, code, wparam, lparam)
 
         self._keyboard_callback, self._mouse_callback = HOOKPROC(keyboard_hook), HOOKPROC(mouse_hook)
