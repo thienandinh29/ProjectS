@@ -7,6 +7,7 @@ from .engine import prepare, Settings, Playback, Cancelled, Plan, Stroke, correc
 from .telex import TextError, normalize, Encoder
 from .importers import read_file, read_google_doc, checked_text
 from .keyboard import WindowsKeyboard
+from .math_text import convert_math
 from . import __version__
 
 SAMPLE = (
@@ -125,6 +126,8 @@ class App:
         self.file_button.pack(side="left")
         self.link_button = ttk.Button(toolbar, text="Nhập link Google Docs", command=self.open_link)
         self.link_button.pack(side="left", padx=(8, 0))
+        self.math_button = ttk.Button(toolbar, text="Chuyển công thức", command=self.convert_formulas)
+        self.math_button.pack(side="left", padx=(8, 0))
         ttk.Label(main, textvariable=self.source_name, style="Muted.TLabel", wraplength=530).grid(row=2, column=0, sticky="w", pady=(5, 10))
         editor = ttk.Frame(main, style="Card.TFrame")
         editor.grid(row=3, column=0, sticky="nsew")
@@ -226,7 +229,7 @@ class App:
 
     def set_busy(self, value):
         self.busy = value
-        for widget in (self.file_button, self.link_button, self.check_button, self.speed_scale, self.correction_check, self.modern_check, self.mode_combo, self.countdown_combo):
+        for widget in (self.file_button, self.link_button, self.math_button, self.check_button, self.speed_scale, self.correction_check, self.modern_check, self.mode_combo, self.countdown_combo):
             widget.state(["disabled"] if value else ["!disabled"])
         self.text.config(state="disabled" if value else "normal")
         self.start_button.state(["!disabled"] if not value and self.text.get("1.0", "end-1c").strip() else ["disabled"])
@@ -239,6 +242,18 @@ class App:
         self.verified_profile = self.completed_test = None
         self.profile.set("Có thể thử lại sau khi đổi cấu hình. Bắt đầu không bị khóa.")
         self.set_busy(False)
+
+    def convert_formulas(self):
+        if self.busy:
+            return
+        original = self.text.get("1.0", "end-1c")
+        converted = convert_math(original)
+        if converted == original:
+            self.status.set("Không tìm thấy công thức LaTeX dạng $...$ để chuyển.")
+            return
+        self.text.delete("1.0", "end")
+        self.text.insert("1.0", converted)
+        self.status.set("Đã chuyển công thức sang văn bản Unicode. Hãy kiểm tra các lệnh LaTeX còn lại trước khi gõ.")
 
     def load(self, action, label):
         if self.busy:

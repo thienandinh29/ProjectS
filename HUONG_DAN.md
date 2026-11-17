@@ -39,6 +39,11 @@ làm vậy sẽ không kiểm tra được khả năng gõ trên máy của bạ
 - **Nhập link Google Docs** chỉ đọc liên kết xem/tải được mà không cần đăng nhập.
   Với tài liệu riêng tư, tự tải `.docx`/`.txt` rồi mở tệp đó. Không cần công khai tài liệu.
 - Kiểm tra phần xem trước: chỉ có chữ và xuống dòng, không giữ ảnh/định dạng.
+- Nếu nguồn có công thức LaTeX dạng `$...$`, nhấn **Chuyển công thức** và
+  kiểm tra kết quả trước khi gõ. Phân số được thể hiện bằng dấu ⁄ và ngoặc;
+  đây là văn bản Unicode, không phải đối tượng công thức của Google Docs.
+  Lệnh chưa hỗ trợ được giữ lại để bạn tự chỉnh. Nút này có thể hiểu hai dấu
+  `$` trong văn bản thông thường là ranh giới công thức, nên hãy kiểm tra lại.
 - Tốc độ mặc định 1× có nhịp 100–220 ms/phím, thêm khoảng nghỉ ở dấu câu.
 - Có thể bật **Thỉnh thoảng gõ sai rồi sửa**; mặc định khi bật là 2% số từ đủ điều kiện.
 - Nhấn **Bắt đầu**, rồi bấm vị trí trống trong Docs trong 5 giây. Không chọn sẵn
