@@ -49,9 +49,11 @@ làm vậy sẽ không kiểm tra được khả năng gõ trên máy của bạ
 Nhấn **F8** ở bất kỳ cửa sổ nào trong lúc đếm ngược/gõ, hoặc bấm **Dừng**.
 Bạn có thể di chuyển và cuộn chuột. Dùng bàn phím, bấm chuột hoặc đổi cửa sổ sẽ dừng gõ; ứng dụng đích cần giữ tiêu điểm.
 
-Nội dung đã gõ được giữ nguyên. Từ đang gõ hoặc đang sửa có thể còn dang dở;
-hãy kiểm tra và tự sửa trước lần tiếp theo. **Bắt đầu từ đầu** luôn gõ lại toàn
-bộ nguồn tại con trỏ hiện tại, không tiếp tục từ chỗ dừng.
+Sau khi dừng, nhấn **Tiếp tục**, rồi trong lúc đếm ngược đặt con trỏ ngay sau
+phần đã gõ, trong cùng tài liệu. Giữ nguyên phần đang gõ hoặc đang sửa dở để
+ứng dụng tiếp tục chính xác. Nếu đã chỉnh sửa phần đó hoặc nội dung nguồn,
+hãy kiểm tra và dùng **Bắt đầu từ đầu** nếu cần. Vị trí tiếp tục chỉ được lưu
+trong khi ứng dụng còn mở; đóng ứng dụng sẽ mất vị trí này.
 
 Trong khi đang nhập tệp/link hoặc kiểm tra nguồn, dùng nút **Dừng**; F8 chỉ
 được bật khi bước đếm ngược bắt đầu. Tải link đã hủy có thể cần tối đa khoảng

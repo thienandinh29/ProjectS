@@ -63,6 +63,9 @@ class App:
         self.messages = queue.Queue()
         self.busy = False
         self.playback = None
+        self.resume_plan = None
+        self.resume_settings = None
+        self.resume_index = 0
         self.preparing_cancel = threading.Event()
         self.verified_profile = None
         self.completed_test = None
@@ -186,6 +189,8 @@ class App:
         ttk.Label(labels, textvariable=self.eta, font=("Segoe UI", 9)).pack(anchor="w", pady=(5, 0))
         self.stop_button = ttk.Button(line, text="Dừng · F8", style="Stop.TButton", command=self.stop, state="disabled")
         self.stop_button.pack(side="right", padx=(8, 0))
+        self.resume_button = ttk.Button(line, text="Tiếp tục", command=self.resume, state="disabled")
+        self.resume_button.pack(side="right", padx=(8, 0))
         self.start_button = ttk.Button(line, text="Bắt đầu", style="Accent.TButton", command=self.start, state="disabled")
         self.start_button.pack(side="right")
         tk.Label(self.root, text="Gõ từng phím/ký tự • F8 dừng • Không tự gửi tin nhắn hoặc lưu tài liệu", font=("Segoe UI", 9), fg="#586c83", bg="#e2eaf3", pady=6).pack(side="bottom", fill="x")
@@ -214,6 +219,9 @@ class App:
         if self.text.edit_modified():
             self.text.tag_remove("problem", "1.0", "end")
             self.text.edit_modified(False)
+            if self.resume_plan and normalize(self.text.get("1.0", "end-1c")) != self.resume_plan.text:
+                self.resume_plan = None
+                self.resume_button.state(["disabled"])
             self.estimate()
 
     def set_busy(self, value):
@@ -223,6 +231,7 @@ class App:
         self.text.config(state="disabled" if value else "normal")
         self.start_button.state(["!disabled"] if not value and self.text.get("1.0", "end-1c").strip() else ["disabled"])
         self.stop_button.state(["!disabled"] if value else ["disabled"])
+        self.resume_button.state(["!disabled"] if not value and self.resume_plan and self.resume_index < len(self.resume_plan.strokes) else ["disabled"])
         self.verify_button.state(["!disabled"] if not value and self.completed_test else ["disabled"])
         self.settings_changed()
 
@@ -298,6 +307,8 @@ class App:
     def start(self, test=False):
         if self.busy:
             return
+        self.resume_plan = None
+        self.resume_index = 0
         text = "Đoàng. Tiếng Việt: coffee, Windows.\n" + ("hoà thuỷ" if self.modern.get() else "hòa thủy") if test else normalize(self.text.get("1.0", "end-1c"))
         if not test:
             self.text.delete("1.0", "end")
@@ -333,7 +344,7 @@ class App:
                 self.playback = playback
                 if self.preparing_cancel.is_set():
                     playback.stop()
-                self.messages.put(("ready", plan))
+                self.messages.put(("ready", (plan, settings)))
                 playback.run(plan, countdown=countdown)
                 if test and not playback.cancelled.is_set() and keyboard.target:
                     # The main thread only exposes verification after a completed run.
@@ -348,6 +359,33 @@ class App:
                 self.messages.put(("error", str(error)))
                 self.messages.put(("finished", "error"))
         self.last_outcome = None
+        threading.Thread(target=worker, daemon=True).start()
+
+    def resume(self):
+        if self.busy or not self.resume_plan:
+            return
+        plan, settings, index = self.resume_plan, self.resume_settings, self.resume_index
+        if normalize(self.text.get("1.0", "end-1c")) != plan.text:
+            self.resume_plan = None
+            self.set_busy(False)
+            self.status.set("Nội dung đã thay đổi; hãy bắt đầu lại từ đầu.")
+            return
+        self.test_run = False
+        self.preparing_cancel = threading.Event()
+        self.set_busy(True)
+        self.status.set("Chuẩn bị tiếp tục. Đặt con trỏ ngay sau phần đã gõ.")
+        countdown = int(self.countdown.get())
+        def worker():
+            try:
+                keyboard = WindowsKeyboard(mode=settings.mode)
+                playback = Playback(keyboard, lambda event, data: self.messages.put((event, data)))
+                self.playback = playback
+                if self.preparing_cancel.is_set():
+                    playback.stop()
+                playback.run(plan, countdown=countdown, start_at=index)
+            except Exception as error:
+                self.messages.put(("error", str(error)))
+                self.messages.put(("finished", "error"))
         threading.Thread(target=worker, daemon=True).start()
 
     def verify_dialog(self):
@@ -410,7 +448,10 @@ class App:
                     self.status.set("Đã hủy nhập văn bản." if cancel.is_set() else error)
                     self.set_busy(False)
                 elif event == "ready":
-                    self.eta.set(f"Dự kiến: {duration(data.estimated_seconds)} · {data.corrections} lần sửa")
+                    plan, settings = data
+                    if not self.test_run:
+                        self.resume_plan, self.resume_settings, self.resume_index = plan, settings, 0
+                    self.eta.set(f"Dự kiến: {duration(plan.estimated_seconds)} · {plan.corrections} lần sửa")
                 elif event == "countdown":
                     self.status.set(f"{data}… Bấm vào ô cần gõ ở Word, Notepad, trình duyệt hoặc ứng dụng khác.")
                 elif event == "progress":
@@ -428,10 +469,16 @@ class App:
                         for issue in data.issues:
                             self.text.tag_add("problem", f"1.0+{issue.start}c", f"1.0+{issue.end}c")
                         self.text.see(f"1.0+{data.issues[0].start}c")
+                elif event == "checkpoint" and not self.test_run and self.resume_plan:
+                    self.resume_index = data
                 elif event == "finished":
                     self.last_outcome = data
                     self.playback = None
+                    if data != "stopped":
+                        self.resume_plan = None
                     self.set_busy(False)
+                    if data == "stopped" and self.resume_plan and self.resume_index < len(self.resume_plan.strokes):
+                        self.status.set("Đã dừng. Nhấn Tiếp tục rồi đặt con trỏ ngay sau phần đã gõ; không sửa phần đó.")
                     if data == "complete":
                         self.eta.set("Hoàn tất · kiểm tra nội dung trong ứng dụng đích")
                 elif event == "test_profile" and self.last_outcome == "complete":

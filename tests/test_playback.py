@@ -76,6 +76,24 @@ class PlaybackTests(unittest.TestCase):
         player.run(self.plan("word \b\b\b\b\bright"), countdown=0)
         self.assertEqual(kb.sent, list("word \b"))
 
+    def test_resume_after_stop_during_correction(self):
+        plan = self.plan("word \b\b\b\b\bright")
+        first, messages = Keyboard(), []
+        player = Playback(first, lambda *event: messages.append(event))
+        first.on_send = lambda: player.stop() if first.sent[-1] == "\b" else None
+        player.run(plan, countdown=0)
+        checkpoint = next(data for event, data in messages if event == "checkpoint")
+        second = Keyboard()
+        Playback(second).run(plan, countdown=0, start_at=checkpoint)
+        self.assertEqual(first.sent + second.sent, list("word \b\b\b\b\bright"))
+
+    def test_stopping_resume_countdown_keeps_checkpoint(self):
+        kb, messages = Keyboard(), []
+        player = Playback(kb, lambda *event: messages.append(event))
+        player.stop()
+        player.run(self.plan(), countdown=0, start_at=1)
+        self.assertIn(("checkpoint", 1), messages)
+
     def test_focus_loss_before_next_stroke(self):
         kb = Keyboard()
         player = Playback(kb)

@@ -63,10 +63,11 @@ UniKey binary. Target-window checks cannot inspect Docs' internal selection or
 guarantee that its server has saved. Place the cursor in a blank position, turn
 off Docs automatic substitutions, and inspect the completed document.
 
-Stopping cancels future strokes and preserves text already sent, including a
-partially typed word/correction. It does not roll back or resume. The next Start
-begins at the start of the source. A stroke already dispatched may still finish
-inside the browser after Stop.
+Stopping cancels future strokes and preserves text already sent. Resume continues
+the saved keystroke sequence within the current app session, including a partially
+typed word or correction. Place the caret immediately after the unchanged output
+in the same document. Starting from the beginning sends the entire source again.
+A stroke already dispatched may still finish inside the target after Stop.
 
 ## License
 

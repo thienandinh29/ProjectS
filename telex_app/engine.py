@@ -147,8 +147,9 @@ class Playback:
                 return
             self.cancelled.wait(min(0.025, remaining))
 
-    def run(self, plan, countdown=5):
+    def run(self, plan, countdown=5, start_at=0):
         outcome = "stopped"
+        next_stroke = start_at
         try:
             self.keyboard.start_monitor(self.stop)
             for seconds in range(countdown, 0, -1):
@@ -158,11 +159,12 @@ class Playback:
                 raise Cancelled()
             self.keyboard.arm()
             self.wait(0)
-            remaining = plan.estimated_seconds
-            for stroke in plan.strokes:
+            remaining = sum(stroke.delay for stroke in plan.strokes[start_at:])
+            for stroke in plan.strokes[start_at:]:
                 with self._send_lock:
                     self.wait(0)
                     self.keyboard.send(stroke.key)
+                    next_stroke += 1
                 self.notify("progress", (stroke.progress, len(plan.text), remaining))
                 self.wait(stroke.delay)
                 remaining = max(0, remaining - stroke.delay)
@@ -175,4 +177,6 @@ class Playback:
             self.notify("error", str(error))
         finally:
             self.keyboard.close()
+            if outcome == "stopped":
+                self.notify("checkpoint", next_stroke)
             self.notify("finished", outcome)
