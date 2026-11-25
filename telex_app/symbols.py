@@ -7,6 +7,7 @@ _SUB = dict(zip("0123456789+-=()aehijklmnoprstuvx", "₀₁₂₃₄₅₆₇₈
 _SUP = dict(zip("0123456789+-=()abcdefghijklmnoprstuvwxyz",
                 "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖʳˢᵗᵘᵛʷˣʸᶻ"))
 _SUP.update(zip("ABDEGHIJKLMNOPRTUVW", "ᴬᴮᴰᴱᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾᴿᵀᵁⱽᵂ"))
+_SUB["−"], _SUP["−"] = "₋", "⁻"  # U+2212 minus sign, as produced by Word/Docs
 # _ or ^ followed by {group}, (group) or one letter/digit/sign.
 _PATTERN = re.compile(r"([_^])(\{[^{}\n]*\}|\([^()\n]*\)|[A-Za-z0-9+\-=])")
 
@@ -215,6 +216,8 @@ _MATH_SPANS = [
 
 
 _PLAIN_NOTE = "\0plain"
+_FALLBACK_NOTE = "\0fallback"
+_KEEP_SUB, _KEEP_SUP = "\ue001", "\ue002"
 _HTML_SCRIPT = re.compile(r"<(sub|sup)>(.*?)</\1>", re.I | re.S)
 _BOLD_MD = re.compile(r"\*\*(?=\S)([^\n]+?)(?<=\S)\*\*")
 
@@ -233,12 +236,16 @@ def _markdown_bold(content, skipped):
 
 def _html_script(match, skipped):
     """<sub>2</sub> / <sup>(1)</sup> (HTML inside Markdown) -> subscript / superscript."""
-    table = _SUB if match.group(1).lower() == "sub" else _SUP
+    is_sub = match.group(1).lower() == "sub"
+    table = _SUB if is_sub else _SUP
     try:
         return "".join(table[c] for c in match.group(2))
     except KeyError:
-        skipped.append(match.group())
-        return match.group()
+        # No Unicode form (decimal point, ×, subscript y...): readable plain notation instead.
+        skipped.append(_FALLBACK_NOTE)
+        body = match.group(2)
+        # Placeholder marks keep the later _/^ pass from reprocessing this plain notation.
+        return (_KEEP_SUB if is_sub else _KEEP_SUP) + (body if len(body) == 1 else "(" + body + ")")
 
 
 def convert_math(text):
@@ -252,8 +259,11 @@ def convert_math(text):
     text = _BOLD_MD.sub(lambda m: _markdown_bold(m.group(1), skipped), text)
     text, left = convert_scripts(text)
     skipped = skipped + left
-    plain = skipped.count(_PLAIN_NOTE)
-    skipped = [x for x in skipped if x != _PLAIN_NOTE]
+    plain, fallback = skipped.count(_PLAIN_NOTE), skipped.count(_FALLBACK_NOTE)
+    skipped = [x for x in skipped if x not in (_PLAIN_NOTE, _FALLBACK_NOTE)]
+    if fallback:
+        skipped.append(f"(đổi sang dạng ^(…) hoặc _(…) ở {fallback} chỗ không có chỉ số Unicode)")
     if plain:
         skipped.append(f"(bỏ in đậm ở {plain} đoạn chữ có dấu, giữ chữ thường)")
+    text = text.replace(_KEEP_SUB, "_").replace(_KEEP_SUP, "^")
     return unicodedata.normalize("NFC", text), skipped

@@ -54,8 +54,14 @@ class SymbolTests(unittest.TestCase):
         self.assertEqual(out, "z⁽¹⁾ = W⁽¹⁾x + b₂, ŷ = σ(z⁽²⁾)")
         self.assertEqual(skipped, [])
         out, skipped = convert_math("**Bước 1** **Bước 2** x<sub>q</sub>")
-        self.assertEqual(out, "Bước 1 Bước 2 x<sub>q</sub>")
-        self.assertEqual(skipped, ["<sub>q</sub>", "(bỏ in đậm ở 2 đoạn chữ có dấu, giữ chữ thường)"])
+        self.assertEqual(out, "Bước 1 Bước 2 x_q")
+        self.assertEqual(skipped, ["(đổi sang dạng ^(…) hoặc _(…) ở 1 chỗ không có chỉ số Unicode)", "(bỏ in đậm ở 2 đoạn chữ có dấu, giữ chữ thường)"])
+
+    def test_html_script_fallbacks_from_real_text(self):
+        src = "a<sup>−0.732</sup> b<sub>t−1</sub> c<sub>y</sub> d<sup>2×1</sup> e<sup>−z</sup> f<sup>0.20303</sup>"
+        out, skipped = convert_math(src)
+        self.assertEqual(out, "a^(−0.732) bₜ₋₁ c_y d^(2×1) e⁻ᶻ f^(0.20303)")
+        self.assertEqual(skipped, ["(đổi sang dạng ^(…) hoặc _(…) ở 4 chỗ không có chỉ số Unicode)"])
 
 
 if __name__ == "__main__":

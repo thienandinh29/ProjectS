@@ -261,7 +261,7 @@ class App:
         if skipped:
             unique = list(dict.fromkeys(skipped))
             shown = ", ".join(unique[:8]) + (f" … và {len(unique) - 8} mục khác" if len(unique) > 8 else "")
-            messagebox.showinfo("Gõ Việt", "Đã dịch xong. Những phần sau không dịch được và được giữ nguyên (trừ mục ghi \"bỏ in đậm\"):\n" + shown)
+            messagebox.showinfo("Gõ Việt", "Đã dịch xong. Những phần sau không dịch được và được giữ nguyên (các mục trong ngoặc là đã xử lý theo cách ghi chú):\n" + shown)
         elif new == text:
             messagebox.showinfo("Gõ Việt", "Không thấy LaTeX hoặc ký hiệu _ ^ nào cần đổi.")
 
