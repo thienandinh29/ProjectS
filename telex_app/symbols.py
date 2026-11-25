@@ -1,5 +1,6 @@
 """Turn LaTeX and a_j^(1) style markup into Unicode text (symbols, sub/superscripts)."""
 import re
+import string
 import unicodedata
 
 _SUB = dict(zip("0123456789+-=()aehijklmnoprstuvx", "₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓ"))
@@ -119,8 +120,8 @@ def _latex(s, skipped):
                     out.append("\n")
                 elif nxt in _SPACES:
                     out.append(_SPACES[nxt])
-                elif nxt in _ESCAPED:
-                    out.append(nxt)
+                elif nxt in _ESCAPED or nxt in string.punctuation:
+                    out.append(nxt)  # LaTeX escapes (\%) and Markdown escapes (\<, \*, \#)
                 else:
                     out.append(s[i:i + 2])
                     skipped.append(s[i:i + 2])
@@ -213,6 +214,21 @@ _MATH_SPANS = [
 ]
 
 
+_BOLD_MD = re.compile(r"\*\*(?=\S)([^\n]+?)(?<=\S)\*\*")
+
+
+def _markdown_bold(content, skipped):
+    """**text** -> Unicode bold. Letters with accents (Vietnamese, Greek) have no bold form:
+    the markers are dropped and the text stays plain, which is reported."""
+    content, left = convert_scripts(content)  # sub/superscripts first: they cannot be bold
+    skipped.extend(left)
+    marks = set(_SUB.values()) | set(_SUP.values())
+    if any(ch.isalpha() and not ch.isascii() and ch not in marks for ch in content):
+        skipped.append("(bỏ in đậm) " + content)
+        return content
+    return _bold(content)
+
+
 def convert_math(text):
     """Translate LaTeX, then a_j^(1) markup. Returns (new_text, skipped)."""
     skipped = []
@@ -220,5 +236,6 @@ def convert_math(text):
         # A lone $...$ is math only if it looks like it ("$5 and $6" stays untouched).
         text = pattern.sub(lambda m: m.group(1) if re.search(r"[\\^_{]", m.group(1)) or pattern is not _MATH_SPANS[-1] else m.group(0), text)
     text = _latex(text, skipped)
+    text = _BOLD_MD.sub(lambda m: _markdown_bold(m.group(1), skipped), text)
     text, left = convert_scripts(text)
     return unicodedata.normalize("NFC", text), skipped + left

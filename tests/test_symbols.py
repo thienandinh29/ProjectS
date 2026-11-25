@@ -41,6 +41,14 @@ class SymbolTests(unittest.TestCase):
         self.assertEqual(skipped, [r"\foo", "_{1,2}"])
         self.assertEqual(convert_math("Tiếng Việt có dấu.")[0], "Tiếng Việt có dấu.")
 
+    def test_markdown_escapes_and_bold(self):
+        self.assertEqual(convert_math(r"a \< b \> c \* d"), ("a < b > c * d", []))
+        self.assertEqual(convert_math("**W** và **a_j**"), ("𝐖 và 𝐚ⱼ", []))
+        out, skipped = convert_math("**Chương 1**: a ** b")
+        self.assertEqual(out, "Chương 1: a ** b")
+        self.assertEqual(skipped, ["(bỏ in đậm) Chương 1"])
+        self.assertEqual(convert_math(r"**\alpha**")[0], "α")
+
 
 if __name__ == "__main__":
     unittest.main()

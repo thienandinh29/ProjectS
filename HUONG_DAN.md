@@ -41,7 +41,9 @@ làm vậy sẽ không kiểm tra được khả năng gõ trên máy của bạ
 - Nút **Dịch LaTeX / _ ^ sang ký hiệu** đổi `$\\alpha \\leq x_j^{(1)}$`, `\\frac{a}{b}`, `\\sqrt{x}`,
   `\\sum_{i=1}^{n}`, `\\mathbf{W}`, `\\hat{y}`, `\\mathbb{R}` thành ký tự Unicode (`α ≤ xⱼ⁽¹⁾`, `a/b`, `√x`, `∑ᵢ₌₁ⁿ`...).
   Kết quả hiện ngay trong ô nhập để bạn xem lại; phần chưa dịch được (ví dụ chỉ số dưới có dấu phẩy,
-  lệnh LaTeX lạ) được giữ nguyên và báo lại. Chữ đậm dùng ký tự toán học in đậm của Unicode.
+  lệnh LaTeX lạ) được giữ nguyên và báo lại. `**đậm**` của Markdown đổi thành ký tự in đậm của Unicode (chỉ với chữ không dấu như `**W**`, `**a_j**`;
+  chữ có dấu tiếng Việt không có dạng in đậm nên app bỏ dấu `**` và giữ chữ thường, đồng thời báo lại).
+  Các ký tự bị escape kiểu Markdown như `\\<`, `\\>`, `\\*` được trả về `<`, `>`, `*`.
 - Kiểm tra phần xem trước: chỉ có chữ và xuống dòng, không giữ ảnh/định dạng.
 - Tốc độ mặc định 1× có nhịp 100–220 ms/phím, thêm khoảng nghỉ ở dấu câu.
 - Sau một số câu ngẫu nhiên (4–9 câu), ứng dụng nghỉ ngay sau dấu chấm/chấm hỏi/
