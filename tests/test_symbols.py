@@ -1,6 +1,6 @@
 import unittest
 
-from telex_app.symbols import convert_math, convert_scripts
+from telex_app.symbols import convert_math, convert_scripts, markdown_to_text, prepare_markdown
 
 
 class SymbolTests(unittest.TestCase):
@@ -62,6 +62,18 @@ class SymbolTests(unittest.TestCase):
         out, skipped = convert_math(src)
         self.assertEqual(out, "a^(−0.732) bₜ₋₁ c_y d^(2×1) e⁻ᶻ f^(0.20303)")
         self.assertEqual(skipped, ["(đổi sang dạng ^(…) hoặc _(…) ở 4 chỗ không có chỉ số Unicode)"])
+
+    def test_escaped_brackets_and_bold_numbers_stay_correct(self):
+        self.assertEqual(convert_math(r"x = \[1.2, −0.7\]<sup>T</sup>, \(a\) và \(\alpha\) và **0.97**")[0],
+                         "x = [1.2, −0.7]ᵀ, (a) và α và 0.97")
+        self.assertEqual(convert_math(r"$\pi r^2$ và $\alpha x$")[0], "πr² và αx")
+
+    def test_markdown_structure_removed(self):
+        src = "# Tiêu đề\n\n> trích\n\n- mục một\n* mục hai\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n---\n\n*nghiêng* và 2*3\n\n<p align=\"center\"><b>HẾT</b></p>"
+        self.assertEqual(markdown_to_text(src),
+                         "Tiêu đề\n\ntrích\n\n• mục một\n• mục hai\n\na | b\n1 | 2\n\nnghiêng và 2*3\n\nHẾT")
+        text, notes = prepare_markdown("**W**<sup>(1)</sup>")
+        self.assertEqual(text, "𝐖⁽¹⁾")
 
 
 if __name__ == "__main__":

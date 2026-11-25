@@ -70,8 +70,6 @@ def _bold(text):
             out.append(chr(0x1D400 + ord(c) - 65))
         elif "a" <= c <= "z":
             out.append(chr(0x1D41A + ord(c) - 97))
-        elif "0" <= c <= "9":
-            out.append(chr(0x1D7CE + ord(c) - 48))
         else:
             out.append(c)
     return "".join(out)
@@ -109,7 +107,7 @@ def _wrap(text):
     return text if len(text) == 1 or text.isdigit() else "(" + text + ")"
 
 
-def _latex(s, skipped):
+def _latex(s, skipped, eat=False):
     out, i = [], 0
     while i < len(s):
         c = s[i]
@@ -132,7 +130,7 @@ def _latex(s, skipped):
             if name in _GREEK:
                 out.append(_GREEK[name])
                 # TeX ignores the space after a command: "\\pi r^2" is "πr²".
-                if re.match(r" +[A-Za-z0-9]", s[i:]):
+                if eat and re.match(r" +[A-Za-z0-9]", s[i:]):
                     i += len(s[i:]) - len(s[i:].lstrip(" "))
             elif name in _SYMBOLS and _SYMBOLS[name]:
                 out.append(_SYMBOLS[name])
@@ -152,7 +150,7 @@ def _latex(s, skipped):
                 if a:
                     b = _arg(s, a[1])
                 if a and b:
-                    out.append(_wrap(_latex(a[0], skipped)) + "/" + _wrap(_latex(b[0], skipped)))
+                    out.append(_wrap(_latex(a[0], skipped, eat)) + "/" + _wrap(_latex(b[0], skipped, eat)))
                     i = b[1]
                 else:
                     out.append("\\" + name)
@@ -164,7 +162,7 @@ def _latex(s, skipped):
                     index, i = s[i + 1:end], end + 1
                 a = _arg(s, i)
                 if a:
-                    body = _latex(a[0], skipped)
+                    body = _latex(a[0], skipped, eat)
                     prefix = ("".join(_SUP.get(ch, ch) for ch in index)) if index else ""
                     out.append(prefix + "√" + _wrap(body))
                     i = a[1]
@@ -173,13 +171,13 @@ def _latex(s, skipped):
             elif name in _ACCENTS:
                 a = _arg(s, i)
                 if a:
-                    body = _latex(a[0], skipped)
+                    body = _latex(a[0], skipped, eat)
                     out.append((body[:-1] + body[-1] + _ACCENTS[name]) if len(body) == 1 else body + _ACCENTS[name])
                     i = a[1]
             elif name in _STYLE_PLAIN or name in _STYLE_BOLD:
                 a = _arg(s, i)
                 if a:
-                    body = _latex(a[0], skipped)
+                    body = _latex(a[0], skipped, eat)
                     if name == "mathbb":
                         body = "".join(_BLACKBOARD.get(ch, ch) for ch in body)
                     elif name in _STYLE_BOLD:
@@ -193,13 +191,13 @@ def _latex(s, skipped):
         if c in "^_" and i + 1 < len(s) and s[i + 1] == "{":
             grp = _group(s, i + 1)
             if grp:
-                out.append(c + "{" + _latex(grp[0], skipped) + "}")
+                out.append(c + "{" + _latex(grp[0], skipped, eat) + "}")
                 i = grp[1]
                 continue
         if c == "{":
             grp = _group(s, i)
             if grp:
-                out.append(_latex(grp[0], skipped))
+                out.append(_latex(grp[0], skipped, eat))
                 i = grp[1]
                 continue
         out.append(c)
@@ -252,8 +250,9 @@ def convert_math(text):
     """Translate LaTeX, then a_j^(1) markup. Returns (new_text, skipped)."""
     skipped = []
     for pattern in _MATH_SPANS:
-        # A lone $...$ is math only if it looks like it ("$5 and $6" stays untouched).
-        text = pattern.sub(lambda m: m.group(1) if re.search(r"[\\^_{]", m.group(1)) or pattern is not _MATH_SPANS[-1] else m.group(0), text)
+        # Delimiters count only if the inside looks like math: "$5 and $6" and Markdown's
+        # escaped brackets "\\[1, 2\\]" stay as text. "$$" is always math.
+        text = pattern.sub(lambda m: _latex(m.group(1), skipped, True) if pattern is _MATH_SPANS[0] or re.search(r"[\\^_{]", m.group(1)) else m.group(0), text)
     text = _latex(text, skipped)
     text = _HTML_SCRIPT.sub(lambda m: _html_script(m, skipped), text)
     text = _BOLD_MD.sub(lambda m: _markdown_bold(m.group(1), skipped), text)
@@ -267,3 +266,33 @@ def convert_math(text):
         skipped.append(f"(bỏ in đậm ở {plain} đoạn chữ có dấu, giữ chữ thường)")
     text = text.replace(_KEEP_SUB, "_").replace(_KEEP_SUP, "^")
     return unicodedata.normalize("NFC", text), skipped
+
+
+def markdown_to_text(text):
+    """Drop Markdown structure that would be typed literally (and that Google Docs would
+    auto-format): headings, quotes, rules, HTML wrappers, list markers, table pipes, italics."""
+    out = []
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if re.fullmatch(r"-{3,}|\*{3,}|_{3,}", stripped):
+            continue
+        if re.fullmatch(r"\|?[\s:|-]+\|?", stripped) and "-" in stripped and "|" in stripped:
+            continue  # table separator row
+        line = re.sub(r"^\s*>+ ?", "", line)
+        line = re.sub(r"^\s*#{1,6}\s+", "", line)
+        line = re.sub(r"^(\s*)[-*+] +", r"\1• ", line)  # "- " would start a Docs list
+        if line.strip().startswith("|") and line.strip().endswith("|"):
+            cells = [c.strip() for c in line.strip()[1:-1].split("|")]
+            line = " | ".join(c for c in cells if c)
+            if not line:
+                continue
+        line = re.sub(r"</?(?:p|b|i|em|strong|br|div|span)\b[^>]*>", "", line, flags=re.I)
+        line = re.sub(r"(?<![*\w])\*(?=\S)([^*\n]+?)(?<=\S)\*(?![*\w])", r"\1", line)
+        out.append(line.rstrip())
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip("\n")
+
+
+def prepare_markdown(text):
+    """Markdown/LaTeX source -> plain text ready to type. Returns (text, notes)."""
+    text, notes = convert_math(text)
+    return markdown_to_text(text), notes
