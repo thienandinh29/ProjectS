@@ -46,8 +46,16 @@ class SymbolTests(unittest.TestCase):
         self.assertEqual(convert_math("**W** và **a_j**"), ("𝐖 và 𝐚ⱼ", []))
         out, skipped = convert_math("**Chương 1**: a ** b")
         self.assertEqual(out, "Chương 1: a ** b")
-        self.assertEqual(skipped, ["(bỏ in đậm) Chương 1"])
+        self.assertEqual(skipped, ["(bỏ in đậm ở 1 đoạn chữ có dấu, giữ chữ thường)"])
         self.assertEqual(convert_math(r"**\alpha**")[0], "α")
+
+    def test_html_sub_sup_and_aggregated_note(self):
+        out, skipped = convert_math("z<sup>(1)</sup> = W<SUP>(1)</SUP>x + b<sub>2</sub>, ŷ = σ(z<sup>(2)</sup>)")
+        self.assertEqual(out, "z⁽¹⁾ = W⁽¹⁾x + b₂, ŷ = σ(z⁽²⁾)")
+        self.assertEqual(skipped, [])
+        out, skipped = convert_math("**Bước 1** **Bước 2** x<sub>q</sub>")
+        self.assertEqual(out, "Bước 1 Bước 2 x<sub>q</sub>")
+        self.assertEqual(skipped, ["<sub>q</sub>", "(bỏ in đậm ở 2 đoạn chữ có dấu, giữ chữ thường)"])
 
 
 if __name__ == "__main__":

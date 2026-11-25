@@ -214,6 +214,8 @@ _MATH_SPANS = [
 ]
 
 
+_PLAIN_NOTE = "\0plain"
+_HTML_SCRIPT = re.compile(r"<(sub|sup)>(.*?)</\1>", re.I | re.S)
 _BOLD_MD = re.compile(r"\*\*(?=\S)([^\n]+?)(?<=\S)\*\*")
 
 
@@ -224,9 +226,19 @@ def _markdown_bold(content, skipped):
     skipped.extend(left)
     marks = set(_SUB.values()) | set(_SUP.values())
     if any(ch.isalpha() and not ch.isascii() and ch not in marks for ch in content):
-        skipped.append("(bỏ in đậm) " + content)
+        skipped.append(_PLAIN_NOTE)
         return content
     return _bold(content)
+
+
+def _html_script(match, skipped):
+    """<sub>2</sub> / <sup>(1)</sup> (HTML inside Markdown) -> subscript / superscript."""
+    table = _SUB if match.group(1).lower() == "sub" else _SUP
+    try:
+        return "".join(table[c] for c in match.group(2))
+    except KeyError:
+        skipped.append(match.group())
+        return match.group()
 
 
 def convert_math(text):
@@ -236,6 +248,12 @@ def convert_math(text):
         # A lone $...$ is math only if it looks like it ("$5 and $6" stays untouched).
         text = pattern.sub(lambda m: m.group(1) if re.search(r"[\\^_{]", m.group(1)) or pattern is not _MATH_SPANS[-1] else m.group(0), text)
     text = _latex(text, skipped)
+    text = _HTML_SCRIPT.sub(lambda m: _html_script(m, skipped), text)
     text = _BOLD_MD.sub(lambda m: _markdown_bold(m.group(1), skipped), text)
     text, left = convert_scripts(text)
-    return unicodedata.normalize("NFC", text), skipped + left
+    skipped = skipped + left
+    plain = skipped.count(_PLAIN_NOTE)
+    skipped = [x for x in skipped if x != _PLAIN_NOTE]
+    if plain:
+        skipped.append(f"(bỏ in đậm ở {plain} đoạn chữ có dấu, giữ chữ thường)")
+    return unicodedata.normalize("NFC", text), skipped

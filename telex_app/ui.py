@@ -259,7 +259,9 @@ class App:
             self.text.delete("1.0", "end")
             self.text.insert("1.0", new)
         if skipped:
-            messagebox.showinfo("Gõ Việt", "Chưa dịch được hoặc chỉ xử lý một phần: " + ", ".join(dict.fromkeys(skipped)) + "\nĐoạn nào không có trong danh sách \"bỏ in đậm\" được giữ nguyên.")
+            unique = list(dict.fromkeys(skipped))
+            shown = ", ".join(unique[:8]) + (f" … và {len(unique) - 8} mục khác" if len(unique) > 8 else "")
+            messagebox.showinfo("Gõ Việt", "Đã dịch xong. Những phần sau không dịch được và được giữ nguyên (trừ mục ghi \"bỏ in đậm\"):\n" + shown)
         elif new == text:
             messagebox.showinfo("Gõ Việt", "Không thấy LaTeX hoặc ký hiệu _ ^ nào cần đổi.")
 
