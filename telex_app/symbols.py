@@ -252,7 +252,7 @@ def convert_math(text):
     for pattern in _MATH_SPANS:
         # Delimiters count only if the inside looks like math: "$5 and $6" and Markdown's
         # escaped brackets "\\[1, 2\\]" stay as text. "$$" is always math.
-        text = pattern.sub(lambda m: _latex(m.group(1), skipped, True) if pattern is _MATH_SPANS[0] or re.search(r"[\\^_{]", m.group(1)) else m.group(0), text)
+        text = pattern.sub(lambda m: _latex(m.group(1), skipped, True) if pattern is _MATH_SPANS[0] or re.search(r"\\[A-Za-z]|[\^_{]", m.group(1)) else m.group(0), text)
     text = _latex(text, skipped)
     text = _HTML_SCRIPT.sub(lambda m: _html_script(m, skipped), text)
     text = _BOLD_MD.sub(lambda m: _markdown_bold(m.group(1), skipped), text)

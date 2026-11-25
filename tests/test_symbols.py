@@ -75,6 +75,11 @@ class SymbolTests(unittest.TestCase):
         text, notes = prepare_markdown("**W**<sup>(1)</sup>")
         self.assertEqual(text, "𝐖⁽¹⁾")
 
+    def test_nested_escaped_brackets_are_not_math(self):
+        src = r"ma trận: \[\[4, 3, 2, 3\], \[3, 4, 3, 2\]\] và F = \[\[1, 5\], \[3, 8\]\]"
+        self.assertEqual(convert_math(src)[0], "ma trận: [[4, 3, 2, 3], [3, 4, 3, 2]] và F = [[1, 5], [3, 8]]")
+        self.assertEqual(convert_math(r"\[\alpha^2\]")[0], "α²")
+
 
 if __name__ == "__main__":
     unittest.main()
