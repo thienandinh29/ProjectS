@@ -4,6 +4,7 @@ import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from .engine import prepare, Settings, Playback, Cancelled, Plan, Stroke, correction_keys, render_unicode, break_seconds
+from .symbols import convert_scripts
 from .telex import TextError, normalize, Encoder, SUPPORTED
 from .importers import read_file, read_google_doc, checked_text
 from .keyboard import WindowsKeyboard
@@ -123,6 +124,8 @@ class App:
         self.file_button.pack(side="left")
         self.link_button = ttk.Button(toolbar, text="Nhập link Google Docs", command=self.open_link)
         self.link_button.pack(side="left", padx=(8, 0))
+        self.script_button = ttk.Button(toolbar, text="Đổi _ ^ thành chỉ số/mũ", command=self.convert_scripts)
+        self.script_button.pack(side="left", padx=(8, 0))
         ttk.Label(main, textvariable=self.source_name, style="Muted.TLabel", wraplength=530).grid(row=2, column=0, sticky="w", pady=(5, 10))
         editor = ttk.Frame(main, style="Card.TFrame")
         editor.grid(row=3, column=0, sticky="nsew")
@@ -247,6 +250,18 @@ class App:
             except Exception as error:
                 self.messages.put(("load_error", (str(error), cancel)))
         threading.Thread(target=worker, daemon=True).start()
+
+    def convert_scripts(self):
+        """Rewrite a_j^(1) as aⱼ⁽¹⁾ in the editor so the user can review it before typing."""
+        text = self.text.get("1.0", "end-1c")
+        new, skipped = convert_scripts(text)
+        if new != text:
+            self.text.delete("1.0", "end")
+            self.text.insert("1.0", new)
+        if skipped:
+            messagebox.showinfo("Gõ Việt", "Chưa có ký tự Unicode cho: " + ", ".join(dict.fromkeys(skipped)) + "\nCác đoạn này được giữ nguyên.")
+        elif new == text:
+            messagebox.showinfo("Gõ Việt", "Không thấy ký hiệu _ hoặc ^ nào cần đổi.")
 
     def open_file(self):
         path = filedialog.askopenfilename(title="Chọn văn bản", filetypes=[("Văn bản và Word", "*.txt *.docx"), ("Văn bản UTF-8", "*.txt"), ("Word", "*.docx")])
