@@ -4,7 +4,7 @@ import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from .engine import prepare, Settings, Playback, Cancelled, Plan, Stroke, correction_keys, render_unicode, break_seconds
-from .symbols import convert_scripts
+from .symbols import convert_math
 from .telex import TextError, normalize, Encoder, SUPPORTED
 from .importers import read_file, read_google_doc, checked_text
 from .keyboard import WindowsKeyboard
@@ -120,11 +120,11 @@ class App:
         ttk.Label(main, text="01  Chuẩn bị nội dung", style="Card.TLabel", font=("Segoe UI Semibold", 13)).grid(row=0, column=0, sticky="w")
         toolbar = ttk.Frame(main, style="Card.TFrame")
         toolbar.grid(row=1, column=0, sticky="ew", pady=(12, 5))
-        self.file_button = ttk.Button(toolbar, text="Mở .txt / .md / .docx", command=self.open_file)
+        self.file_button = ttk.Button(toolbar, text="Mở .txt / .md / .tex / .docx", command=self.open_file)
         self.file_button.pack(side="left")
         self.link_button = ttk.Button(toolbar, text="Nhập link Google Docs", command=self.open_link)
         self.link_button.pack(side="left", padx=(8, 0))
-        self.script_button = ttk.Button(toolbar, text="Đổi _ ^ thành chỉ số/mũ", command=self.convert_scripts)
+        self.script_button = ttk.Button(toolbar, text="Dịch LaTeX / _ ^ sang ký hiệu", command=self.convert_scripts)
         self.script_button.pack(side="left", padx=(8, 0))
         ttk.Label(main, textvariable=self.source_name, style="Muted.TLabel", wraplength=530).grid(row=2, column=0, sticky="w", pady=(5, 10))
         editor = ttk.Frame(main, style="Card.TFrame")
@@ -254,17 +254,17 @@ class App:
     def convert_scripts(self):
         """Rewrite a_j^(1) as aⱼ⁽¹⁾ in the editor so the user can review it before typing."""
         text = self.text.get("1.0", "end-1c")
-        new, skipped = convert_scripts(text)
+        new, skipped = convert_math(text)
         if new != text:
             self.text.delete("1.0", "end")
             self.text.insert("1.0", new)
         if skipped:
-            messagebox.showinfo("Gõ Việt", "Chưa có ký tự Unicode cho: " + ", ".join(dict.fromkeys(skipped)) + "\nCác đoạn này được giữ nguyên.")
+            messagebox.showinfo("Gõ Việt", "Chưa dịch được: " + ", ".join(dict.fromkeys(skipped)) + "\nCác đoạn này được giữ nguyên.")
         elif new == text:
-            messagebox.showinfo("Gõ Việt", "Không thấy ký hiệu _ hoặc ^ nào cần đổi.")
+            messagebox.showinfo("Gõ Việt", "Không thấy LaTeX hoặc ký hiệu _ ^ nào cần đổi.")
 
     def open_file(self):
-        path = filedialog.askopenfilename(title="Chọn văn bản", filetypes=[("Văn bản và Word", "*.txt *.md *.markdown *.docx"), ("Văn bản UTF-8", "*.txt *.md *.markdown"), ("Word", "*.docx")])
+        path = filedialog.askopenfilename(title="Chọn văn bản", filetypes=[("Văn bản và Word", "*.txt *.md *.markdown *.tex *.docx"), ("Văn bản UTF-8", "*.txt *.md *.markdown *.tex"), ("Word", "*.docx")])
         if path:
             from pathlib import Path
             self.load(lambda: read_file(path), Path(path).name)
