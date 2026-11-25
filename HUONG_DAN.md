@@ -34,8 +34,8 @@ làm vậy sẽ không kiểm tra được khả năng gõ trên máy của bạ
 
 ## 3. Nhập nội dung và bắt đầu
 
-- Dán nội dung vào ô lớn, hoặc dùng **Mở .txt / .docx**.
-- Tệp `.txt` cần UTF-8 hoặc UTF-16 có BOM. Mã VNI/TCVN3 cần chuyển sang Unicode.
+- Dán nội dung vào ô lớn, hoặc dùng **Mở .txt / .md / .docx**.
+- Tệp `.txt` và `.md` cần UTF-8 hoặc UTF-16 có BOM. Mã VNI/TCVN3 cần chuyển sang Unicode.
 - **Nhập link Google Docs** chỉ đọc liên kết xem/tải được mà không cần đăng nhập.
   Với tài liệu riêng tư, tự tải `.docx`/`.txt` rồi mở tệp đó. Không cần công khai tài liệu.
 - Kiểm tra phần xem trước: chỉ có chữ và xuống dòng, không giữ ảnh/định dạng.

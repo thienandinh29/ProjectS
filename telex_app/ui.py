@@ -120,7 +120,7 @@ class App:
         ttk.Label(main, text="01  Chuẩn bị nội dung", style="Card.TLabel", font=("Segoe UI Semibold", 13)).grid(row=0, column=0, sticky="w")
         toolbar = ttk.Frame(main, style="Card.TFrame")
         toolbar.grid(row=1, column=0, sticky="ew", pady=(12, 5))
-        self.file_button = ttk.Button(toolbar, text="Mở .txt / .docx", command=self.open_file)
+        self.file_button = ttk.Button(toolbar, text="Mở .txt / .md / .docx", command=self.open_file)
         self.file_button.pack(side="left")
         self.link_button = ttk.Button(toolbar, text="Nhập link Google Docs", command=self.open_link)
         self.link_button.pack(side="left", padx=(8, 0))
@@ -264,7 +264,7 @@ class App:
             messagebox.showinfo("Gõ Việt", "Không thấy ký hiệu _ hoặc ^ nào cần đổi.")
 
     def open_file(self):
-        path = filedialog.askopenfilename(title="Chọn văn bản", filetypes=[("Văn bản và Word", "*.txt *.docx"), ("Văn bản UTF-8", "*.txt"), ("Word", "*.docx")])
+        path = filedialog.askopenfilename(title="Chọn văn bản", filetypes=[("Văn bản và Word", "*.txt *.md *.markdown *.docx"), ("Văn bản UTF-8", "*.txt *.md *.markdown"), ("Word", "*.docx")])
         if path:
             from pathlib import Path
             self.load(lambda: read_file(path), Path(path).name)

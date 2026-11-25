@@ -38,10 +38,10 @@ def read_file(path):
         if path.stat().st_size > MAX_BYTES:
             raise ImportFailure("Tệp lớn hơn 10 MB. Hãy chia nhỏ trước khi nhập.")
         suffix = path.suffix.lower()
-        if suffix == ".txt":
+        if suffix in (".txt", ".md", ".markdown"):
             return decode_text(path.read_bytes())
         if suffix != ".docx":
-            raise ImportFailure("Chỉ hỗ trợ .txt và .docx. Hãy lưu tệp .doc/.docs thành .docx.")
+            raise ImportFailure("Chỉ hỗ trợ .txt, .md và .docx. Hãy lưu tệp .doc/.docs thành .docx.")
         from docx import Document
         from docx.table import Table
         from docx.text.paragraph import Paragraph

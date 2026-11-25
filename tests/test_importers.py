@@ -39,6 +39,13 @@ class ImportTests(unittest.TestCase):
             doc.save(path)
             self.assertEqual(read_file(path), "Đoàng\nTiếng | Việt\nHợp nhất\nKết thúc")
 
+    def test_markdown_read_like_text(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for name in ("a.md", "b.MD", "c.markdown"):
+                path = Path(directory) / name
+                path.write_bytes("# Tiêu đề\r\n\r\nĐoạn **đậm**.".encode("utf-8-sig"))
+                self.assertEqual(read_file(path), "# Tiêu đề\n\nĐoạn **đậm**.")
+
     def test_file_failures(self):
         with tempfile.TemporaryDirectory() as directory:
             for name in ("bad.docx", "old.doc", "typo.docs"):
